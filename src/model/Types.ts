@@ -1,5 +1,5 @@
 import { signMessage } from "../service/signTransaction";
-
+import forge from "node-forge";
 export type Keys = {
   publicKey: string;
   privateKey: string;
@@ -20,7 +20,7 @@ export class Transaction {
   signTransaction(): any {
     return (
       signMessage(
-        localStorage.getItem("privateKey") + "",
+        forge.util.decode64(localStorage.getItem("privateKey") + ""),
         this.sender,
         this.receiver,
         this.amount
