@@ -12,9 +12,12 @@ import Home from "./components/Home";
 import NavbarComponent  from "../src/components/NavbarComponent.jsx";
 const App = () => {
   return (
-    <div className="w-screen min-h-screen bg-black">
+    <div className="w-screen  min-h-screen bg-black ">
       <Router>
         {/* <NavbarComponent/> */}
+        <div className="absolute left-7 top-5 text-2xl">
+          <span className="">N</span><span className="text-[#C73848]">A</span><span className="">M</span>S<span className="text-[#C73848]">C</span>AN
+        </div>
         <Routes>
           <Route element={<RequiredAuth />}>
             <Route path="/" element={<Sign />} />

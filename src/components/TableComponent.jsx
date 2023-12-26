@@ -4,6 +4,8 @@ import useSWR from "swr";
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json());
 
+const API_URL = "http://localhost:8080"
+
 export default function App() {
   const [page, setPage] = React.useState(1);
 
@@ -14,7 +16,7 @@ export default function App() {
     else return ch;
   }
 
-  const {data, isLoading} = useSWR(`http://192.168.43.136:8080/api/v1/transactions?page=${page}`, fetcher, {
+  const {data, isLoading,mutate} = useSWR(`${API_URL}/api/v1/transactions?page=${page}`, fetcher, {
     keepPreviousData: true,
   });
   console.log(data);
@@ -25,7 +27,7 @@ export default function App() {
     return data?.count ? Math.ceil(data.count / rowsPerPage) : 0;
   }, [data?.count, rowsPerPage]);
 
-  const loadingState = isLoading || data?.results.length === 0 ? "loading" : "idle";
+  const loadingState = isLoading ? "loading" : "idle";
 
   return (
     <Table
@@ -58,7 +60,7 @@ export default function App() {
         loadingState={loadingState}
       >
         {(item) => (
-          <TableRow  key={item?.sender}>
+          <TableRow  key={item?.sender+data?.results.indexOf(item)}>
             {(columnKey) => <TableCell className="">{trim(getKeyValue(item, columnKey))}</TableCell>}
           </TableRow>
         )}

@@ -1,15 +1,41 @@
 import React, { useEffect, useRef, useState } from "react";
 import {Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, Checkbox, Input, Link, Snippet} from "@nextui-org/react";
-import {MailIcon} from './MailIcon.jsx';
 import { IoIosRefresh } from "react-icons/io";
 import axios from "axios";
-import {LockIcon} from './LockIcon.jsx';
 import { CopyIcon } from "./CopyIcon";
 import { CheckIcon } from "./CheckIcon";
 import { Transaction } from "../model/Types.js";
 import { useNavigate } from "react-router";
+import { useMemo } from "react";
+import {Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Pagination, Spinner, getKeyValue} from "@nextui-org/react";
+import useSWR from "swr";
+
+const fetcher = (...args) => fetch(...args).then((res) => res.json());
+
+const API_URL = "http://localhost:8080"
 
 export default function App() {
+  const [page, setPage] = React.useState(1);
+
+  const trim=(ch)=>{
+    if(ch.length>=40){
+      return ch.substring(0,40)+"..."
+    }
+    else return ch;
+  }
+
+  const {data, isLoading,mutate} = useSWR(`${API_URL}/api/v1/transactions?page=${page}`, fetcher, {
+    keepPreviousData: true,
+  });
+  console.log(data);
+
+  const rowsPerPage = 8;
+
+  const pages = useMemo(() => {
+    return data?.count ? Math.ceil(data.count / rowsPerPage) : 0;
+  }, [data?.count, rowsPerPage]);
+
+  const loadingState = isLoading ? "loading" : "idle";
   const navigate = useNavigate();
 
   
@@ -23,15 +49,16 @@ export default function App() {
   },[balance])
   async function getBalance() {
     const res = await axios.get(
-      `http://192.168.43.136:8080/api/v1/balances/${localStorage.getItem(
+      `${API_URL}/api/v1/balances/${localStorage.getItem(
         "publicKey"
       )}`
     );
     setBalance(res.data.balance);
+    mutate(`${API_URL}/api/v1/transactions?page=${1}`);
   }
   async function getInitialAmountOfNam() {
     await axios.post(
-      `http://192.168.43.136:8080/api/v1/nam/${localStorage.getItem(
+      `${API_URL}/api/v1/nam/${localStorage.getItem(
         "publicKey"
       )}`
     );
@@ -52,13 +79,13 @@ export default function App() {
       Number(amount.current?.value)
     );
     const result = await axios
-      .post("http://192.168.43.136:8080/api/v1/transactions", {
+      .post(`${API_URL}/api/v1/transactions`, {
         sender: transaction.sender,
         receiver: transaction.receiver,
         amount: transaction.amount,
         signature: transaction.signature,
       })
-      .catch((err) => console.log(err));
+      .catch((err) => alert(err.response.data.message));
       getBalance()
   }
 
@@ -112,6 +139,42 @@ export default function App() {
           )}
         </ModalContent>
       </Modal>
+      <Table
+      aria-label="Example table with client async pagination"
+      bottomContent={
+        pages > 0 ? (
+          <div className="flex w-full justify-center">
+            <Pagination
+              isCompact
+              showControls
+              showShadow
+              color="primary"
+              page={page}
+              total={pages}
+              onChange={(page) => setPage(page)}
+            />
+          </div>
+        ) : null
+      }
+    >
+      <TableHeader>
+        <TableColumn key="sender">sender</TableColumn>
+        <TableColumn key="receiver">receiver</TableColumn>
+        <TableColumn key="amount">amount</TableColumn>
+        <TableColumn key="signature">signature</TableColumn>
+      </TableHeader>
+      <TableBody
+        items={data?.results ?? []}
+        loadingContent={<Spinner />}
+        loadingState={loadingState}
+      >
+        {(item) => (
+          <TableRow  key={item?.sender+data?.results.indexOf(item)}>
+            {(columnKey) => <TableCell className="">{trim(getKeyValue(item, columnKey))}</TableCell>}
+          </TableRow>
+        )}
+      </TableBody>
+    </Table>
     </>
   );
 }

@@ -8,9 +8,8 @@ const Home = () => {
   
 
   return (
-    <div className="w-screen flex flex-col gap-6 items-center justify-center min-h-screen">
+    <div className="w-screen flex pt-20 flex-col gap-6 items-center min-h-screen">
       <SendTransaction/>
-      <TableComponent/>
     </div>
   );
 };
